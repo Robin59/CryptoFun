@@ -26,19 +26,23 @@ namespace CryptoFun
             {
                 if (Key_Conform(Key)) 
                     return Encrypt_Specific_Algo(Source_Text, Key);                
-                    else return "";
+                    else return "The key is incompatible with the chosen algorithm";
             }
             public String Decrypt(String Cypher_Text, String Key)
             {
                 if (Key_Conform(Key))
                     return Decrypt_Specific_Algo(Cypher_Text, Key);
-                    else return "";
+                    else return "The key is incompatible with the chosen algorithm";
             }
         }
 
         private class Ceasar_Cypher : Cypher_Algorithm
         {
-            protected override bool Key_Conform(String Key) { return true; }
+            protected override bool Key_Conform(String Key)
+            {
+                Int32 Mook_Int;
+                return Int32.TryParse(Key, out Mook_Int);
+            }
 
             protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
             {
