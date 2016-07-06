@@ -12,8 +12,7 @@ namespace CryptoFun
 {
     
     public partial class Main : Form
-    {
-        enum CryptoAlgorithm { CA_Ceasar };
+    {       
 
         private abstract class Cypher_Algorithm
         {
@@ -61,10 +60,11 @@ namespace CryptoFun
             {
                 return Encrypt_Specific_Algo(Cypher_Text, "-"+Key);
             }
+
+            public override String ToString() {return "Ceasar cypher";}
            
         }
-       
-        private Cypher_Algorithm Chosen_CryptoAlgorithm;
+               
 
         public Main()
         {
@@ -74,18 +74,29 @@ namespace CryptoFun
 
         private void InitializeValues()
         {
-            Chosen_CryptoAlgorithm = new Ceasar_Cypher();
+            comboBox_Algo_Choice.Items.Add(new Ceasar_Cypher());            
         }
                
 
         private void button_Encrypt_Click(object sender, EventArgs e)
         {
-            textBox_Out.Text = Chosen_CryptoAlgorithm.Encrypt(textBox_In.Text, textBox_Key.Text);
+            if (comboBox_Algo_Choice.SelectedItem != null) {
+                textBox_Out.Text = ((Cypher_Algorithm)(comboBox_Algo_Choice.SelectedItem)).Encrypt(textBox_In.Text, textBox_Key.Text);
+            }else {
+                textBox_Out.Text = "Choose a cypher algorithm";
+            }
         }
 
         private void button_Decrypt_Click(object sender, EventArgs e)
-        {            
-            textBox_In.Text = Chosen_CryptoAlgorithm.Decrypt(textBox_Out.Text, textBox_Key.Text);
+        {
+            if (comboBox_Algo_Choice.SelectedItem != null)
+            {
+                textBox_In.Text = ((Cypher_Algorithm)(comboBox_Algo_Choice.SelectedItem)).Decrypt(textBox_Out.Text, textBox_Key.Text);
+            }
+            else
+            {
+                textBox_In.Text = "Choose a cypher algorithm";
+            }
         }
     }
 }

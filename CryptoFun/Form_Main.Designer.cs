@@ -43,7 +43,6 @@
             this.comboBox_Algo_Choice.Name = "comboBox_Algo_Choice";
             this.comboBox_Algo_Choice.Size = new System.Drawing.Size(121, 21);
             this.comboBox_Algo_Choice.TabIndex = 0;
-            this.comboBox_Algo_Choice.Visible = false;
             // 
             // textBox_In
             // 
