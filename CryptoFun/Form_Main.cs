@@ -40,7 +40,7 @@ namespace CryptoFun
             protected override bool Key_Conform(String Key)
             {
                 Int32 Mook_Int;
-                return Int32.TryParse(Key, out Mook_Int);
+                return Int32.TryParse(Key, out Mook_Int) && (Mook_Int>=0);
             }
 
             protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
