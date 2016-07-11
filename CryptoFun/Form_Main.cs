@@ -69,9 +69,13 @@ namespace CryptoFun
 
         private class DES_Cypher : Cypher_Algorithm
         {
+            const int length_Key_in_Bits=64;
+
             protected override bool Key_Conform(String Key)
-            {  // To do : the key must be 56 bits long. 
-                return true;
+            {   
+                byte[] Key_in_Bytes = System.Text.UTF32Encoding.Default.GetBytes(Key);
+                BitArray Key_in_Bits = new System.Collections.BitArray(Key_in_Bytes);
+                return Key_in_Bits.Length==length_Key_in_Bits;
             }
             
             ///<param name="Message">Message in clear, must be 64 bits long</param> 
@@ -88,15 +92,19 @@ namespace CryptoFun
             ///<param name="Key">The key must be 56 bits long</param>                        
             private BitArray[] Partial_Keys_Creation(BitArray Key)
             {
-                const int Nb_partial_Key=16;
+                const int Nb_partial_Key = 16;
+                const int Length_of_partial_Key = 48;
                 int[] PC1 = { 57, 49, 41, 33, 25, 17, 9, 1, 58, 50, 42, 34, 26, 18, 10, 2, 59, 51, 43, 35, 27, 19, 11, 3, 60, 52, 44, 36, 63, 55, 47, 39, 31, 23, 15, 7, 62, 54, 46, 38, 30, 22, 14, 6, 61, 53, 45, 37, 29, 21, 13, 5, 28, 20, 12, 4 };
+                int[] PC2 = { 14, 17, 11, 24, 1, 5, 3, 28, 15, 6, 21, 10, 23, 19, 12, 4, 26, 8, 16, 7, 27, 20, 13, 2, 41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48, 44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32 };
+
                 BitArray[] Partial_Keys = new BitArray[Nb_partial_Key];
+
                 // first permutation and splitting in 2 tabs of bytes U and D
                 Boolean[] U = new Boolean[28];
                 Boolean[] D = new Boolean[28];
 
-                for (int i = 0; i < 28; i++)
-                    U[i] = (Key[PC1[i] - 1]);
+                for (int i = 0; i < 28; i++)                
+                    U[i] = (Key[(PC1[i] - 1)]); 
                 for (int i = 0; i < 28; i++)
                     D[i] = (Key[PC1[i+28] - 1]);
 
@@ -126,12 +134,13 @@ namespace CryptoFun
                         D[26] = temp1;
                         D[27] = temp2;
                     }
-                    //Paste the 2 tabs in one            
-                    //Permutation PC2
-
+                    //Paste the 2 tabs in one and do the PC2 permutation 
+                    Partial_Keys[i] = new BitArray(Length_of_partial_Key);
+                    for (int j=0; j< Length_of_partial_Key; j++)          
+                        Partial_Keys[i][j] = (PC2[j]<=U.Length) ? U[PC2[j]-1] : D[PC2[j]-1-U.Length];          
                 }
 
-                return null;
+                return Partial_Keys;
             }
 
             protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
@@ -140,10 +149,11 @@ namespace CryptoFun
                 BitArray Key_in_Bits = new System.Collections.BitArray(TempoBytes);
                 TempoBytes = System.Text.UTF32Encoding.Default.GetBytes(Source_Text);
                 BitArray Source_Text_in_Bits = new System.Collections.BitArray(TempoBytes);
-                //Add bytes to the message (if necessary), dived it in part of 64 bits
-                
-                //creation of the 16 partial keys : Ki
+                BitArray[] Ki = Partial_Keys_Creation(Key_in_Bits);
 
+                //Add bytes to the message (if necessary), dived it in part of 64 bits
+
+                //DES_Algo(Source_Text_in_Bits, Ki);
 
                 // convert bits to String
 
