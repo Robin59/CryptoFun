@@ -187,18 +187,19 @@ namespace CryptoFun
             }
 
             protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
-            {                
+            {
+                String Coded_text_String = "";
                 byte[] TempoBytes = System.Text.UTF32Encoding.Default.GetBytes(Key);
                 BitArray Key_in_Bits = new System.Collections.BitArray(TempoBytes);
                 BitArray[] Ki = Partial_Keys_Creation(Key_in_Bits);
 
                 while (Source_Text.Length % 8 != 0) // Add bytes to the message (if necessary)
                     Source_Text += " ";
-                TempoBytes = System.Text.UTF32Encoding.Default.GetBytes(Source_Text);
+                TempoBytes = System.Text.ASCIIEncoding.Default.GetBytes(Source_Text);
                 BitArray Source_Text_in_Bits = new System.Collections.BitArray(TempoBytes);
                 // dived message in part of 64 bits
                 // TO DO 
-
+                
                 // Initial permutation PI on the message + split it in two parts, the left part and the rigth part
                 BitArray L = new BitArray(Source_Text_in_Bits.Length / 2);
                 BitArray R = new BitArray(Source_Text_in_Bits.Length / 2);                
@@ -210,10 +211,16 @@ namespace CryptoFun
                 Feistel_Algo(L,R,Ki);
 
                 // aggregate the left and rigth parts + inverse permutation IP^(-1) on the coded message
-                //to do 
-                // convert bits to String
-                //to do 
-                return "Not working for now";
+                BitArray Coded_text_In_Bits = new BitArray(64);
+                for (int i=0; i< IP.Length; i++)
+                    Coded_text_In_Bits[i] = (IP[i]-1)<L.Length ? L[IP[i]-1] : R[IP[i]-1-L.Length];
+
+                // convert bits to String  
+                byte[] Coded_text_In_Bytes = new byte[Coded_text_In_Bits.Length/8];
+                Coded_text_In_Bits.CopyTo(Coded_text_In_Bytes,0);
+                Coded_text_String = Coded_text_String + System.Text.ASCIIEncoding.Default.GetString(Coded_text_In_Bytes);
+                
+                return Coded_text_String;
             }
 
             protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key)
