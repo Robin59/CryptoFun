@@ -188,6 +188,7 @@ namespace CryptoFun
 
             protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
             {
+                const int Message_Blocks_Lenght = 64;
                 String Coded_text_String = "";
                 byte[] TempoBytes = System.Text.UTF32Encoding.Default.GetBytes(Key);
                 BitArray Key_in_Bits = new System.Collections.BitArray(TempoBytes);
@@ -197,28 +198,29 @@ namespace CryptoFun
                     Source_Text += " ";
                 TempoBytes = System.Text.ASCIIEncoding.Default.GetBytes(Source_Text);
                 BitArray Source_Text_in_Bits = new System.Collections.BitArray(TempoBytes);
-                // dived message in part of 64 bits
-                // TO DO 
-                
-                // Initial permutation PI on the message + split it in two parts, the left part and the rigth part
-                BitArray L = new BitArray(Source_Text_in_Bits.Length / 2);
-                BitArray R = new BitArray(Source_Text_in_Bits.Length / 2);                
-                for (int i = 0; i < (Source_Text_in_Bits.Length / 2); i++)
-                    L[i] = Source_Text_in_Bits[PI[i] - 1];
-                for (int i = (Source_Text_in_Bits.Length / 2); i < (Source_Text_in_Bits.Length); i++)
-                    R[i - (Source_Text_in_Bits.Length / 2)] = Source_Text_in_Bits[PI[i] - 1];
+                // divid message in part of 64 bits
+                for (int i = 0; i < Source_Text_in_Bits.Length/Message_Blocks_Lenght; i++)
+                {
+                    // Initial permutation PI on the message + split it in two parts, the left part and the rigth part
+                    BitArray L = new BitArray(Message_Blocks_Lenght/2);
+                    BitArray R = new BitArray(Message_Blocks_Lenght/2);
+                    for (int j = 0; j < (Message_Blocks_Lenght/2); j++)
+                        L[j] = Source_Text_in_Bits[PI[j]-1+i*64];
+                    for (int j = (Message_Blocks_Lenght/2); j < (Message_Blocks_Lenght); j++)
+                        R[j-(Message_Blocks_Lenght/2)] = Source_Text_in_Bits[PI[j]-1+i*64];
 
-                Feistel_Algo(L,R,Ki);
+                    Feistel_Algo(L, R, Ki);
 
-                // aggregate the left and rigth parts + inverse permutation IP^(-1) on the coded message
-                BitArray Coded_text_In_Bits = new BitArray(64);
-                for (int i=0; i< IP.Length; i++)
-                    Coded_text_In_Bits[i] = (IP[i]-1)<L.Length ? L[IP[i]-1] : R[IP[i]-1-L.Length];
+                    // aggregate the left and rigth parts + inverse permutation IP^(-1) on the coded message
+                    BitArray Coded_text_In_Bits = new BitArray(64);
+                    for (int j = 0; j < IP.Length; j++)
+                        Coded_text_In_Bits[j] = (IP[j] - 1) < L.Length ? L[IP[j] - 1] : R[IP[j] - 1 - L.Length];
 
-                // convert bits to String  
-                byte[] Coded_text_In_Bytes = new byte[Coded_text_In_Bits.Length/8];
-                Coded_text_In_Bits.CopyTo(Coded_text_In_Bytes,0);
-                Coded_text_String = Coded_text_String + System.Text.ASCIIEncoding.Default.GetString(Coded_text_In_Bytes);
+                    // convert bits to String  
+                    byte[] Coded_text_In_Bytes = new byte[Coded_text_In_Bits.Length / 8];
+                    Coded_text_In_Bits.CopyTo(Coded_text_In_Bytes, 0);
+                    Coded_text_String = Coded_text_String + System.Text.ASCIIEncoding.Default.GetString(Coded_text_In_Bytes);
+                }
                 
                 return Coded_text_String;
             }
