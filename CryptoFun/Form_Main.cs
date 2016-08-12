@@ -88,10 +88,10 @@ namespace CryptoFun
             ///<param name="R">Rigth parts of the message, 32 bits long</param> 
             ///<param name="Ki">The partial keys, need 16 keys of 48 bits long</param>                        
             private void Feistel_Algo(BitArray L, BitArray R, BitArray[] Ki)
-            {                                                                
+            {
                 for (int i=0; i<Ki.Length; i++)
                 {
-                    
+
                     BitArray ExpendedR = new BitArray(48);
                     for (int j = 0; j < 48; j++) ExpendedR[j] = R[(E[j] - 1)]; // Expension fonction, R goes from 32 bits to 48
 
@@ -110,7 +110,10 @@ namespace CryptoFun
                         y = ExpendedR[j*6+4] ? y : y+1;
 
                         //Since the 8 results of the S-Boxes are 4 bits long, we're putting two results in one byte
-                        SBoxesResult[j/2] = (j % 2==0)? S[j, x, y] : (byte)(SBoxesResult[j/2]+S[j, x, y]*16);
+                        //SBoxesResult[j/2] = (j % 2==0)? S[j, x, y] : (byte)(SBoxesResult[j/2]+S[j, x, y]*16);
+                        if (j % 2 == 0)
+                            SBoxesResult[j / 2]= S[j, x, y];
+                       else SBoxesResult[j / 2]= (byte)(SBoxesResult[j / 2] + (S[j, x, y]*16));
                     }
                          
                     BitArray SBoxesResult_Bits = new BitArray(SBoxesResult);
@@ -188,26 +191,39 @@ namespace CryptoFun
 
             protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
             {
+                return Crypt_Decrypt_Specific_Algo(Source_Text,Key, false);
+            }
+
+            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key)
+            {
+                return Crypt_Decrypt_Specific_Algo(Cypher_Text, Key, true);
+            }
+
+            // Crypt_Decrypt_Specific_Algo is a factorisation of the code use by Encrypt_Specific_Algo and Decrypt_Specific_Algo
+            // The encryption and decryption algo are the same, the only change is the order of the keys
+            private String Crypt_Decrypt_Specific_Algo(String Text, String Key, Boolean encrypt)
+            {
                 const int Message_Blocks_Lenght = 64;
                 String Coded_text_String = "";
-                byte[] TempoBytes = System.Text.UTF32Encoding.Default.GetBytes(Key);
+                byte[] TempoBytes = System.Text.Encoding.Default.GetBytes(Key);
                 BitArray Key_in_Bits = new System.Collections.BitArray(TempoBytes);
                 BitArray[] Ki = Partial_Keys_Creation(Key_in_Bits);
+                if (encrypt) Array.Reverse(Ki);//the order of the keys are change if we want to decrypt
 
-                while (Source_Text.Length % 8 != 0) // Add bytes to the message (if necessary)
-                    Source_Text += " ";
-                TempoBytes = System.Text.ASCIIEncoding.Default.GetBytes(Source_Text);
+                while (Text.Length % 8 != 0) // Add bytes to the message (if necessary)
+                    Text += " ";
+                TempoBytes = System.Text.Encoding.Default.GetBytes(Text);
                 BitArray Source_Text_in_Bits = new System.Collections.BitArray(TempoBytes);
                 // divid message in part of 64 bits
-                for (int i = 0; i < Source_Text_in_Bits.Length/Message_Blocks_Lenght; i++)
+                for (int i = 0; i < Source_Text_in_Bits.Length / Message_Blocks_Lenght; i++)
                 {
                     // Initial permutation PI on the message + split it in two parts, the left part and the rigth part
-                    BitArray L = new BitArray(Message_Blocks_Lenght/2);
-                    BitArray R = new BitArray(Message_Blocks_Lenght/2);
-                    for (int j = 0; j < (Message_Blocks_Lenght/2); j++)
-                        L[j] = Source_Text_in_Bits[PI[j]-1+i*64];
-                    for (int j = (Message_Blocks_Lenght/2); j < (Message_Blocks_Lenght); j++)
-                        R[j-(Message_Blocks_Lenght/2)] = Source_Text_in_Bits[PI[j]-1+i*64];
+                    BitArray L = new BitArray(Message_Blocks_Lenght / 2);
+                    BitArray R = new BitArray(Message_Blocks_Lenght / 2);
+                    for (int j = 0; j < (Message_Blocks_Lenght / 2); j++)
+                        L[j] = Source_Text_in_Bits[PI[j] - 1 + i * 64];
+                    for (int j = (Message_Blocks_Lenght / 2); j < (Message_Blocks_Lenght); j++)
+                        R[j - (Message_Blocks_Lenght / 2)] = Source_Text_in_Bits[PI[j] - 1 + i * 64];
 
                     Feistel_Algo(L, R, Ki);
 
@@ -219,16 +235,12 @@ namespace CryptoFun
                     // convert bits to String  
                     byte[] Coded_text_In_Bytes = new byte[Coded_text_In_Bits.Length / 8];
                     Coded_text_In_Bits.CopyTo(Coded_text_In_Bytes, 0);
-                    Coded_text_String = Coded_text_String + System.Text.ASCIIEncoding.Default.GetString(Coded_text_In_Bytes);
+                    Coded_text_String = Coded_text_String + System.Text.Encoding.Default.GetString(Coded_text_In_Bytes);
                 }
                 
                 return Coded_text_String;
             }
 
-            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key)
-            {
-                return "Not working for now";
-            }
 
             public override String ToString() { return "DES"; }
 
