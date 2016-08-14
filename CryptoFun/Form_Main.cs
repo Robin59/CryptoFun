@@ -94,7 +94,7 @@ namespace CryptoFun
 
             protected override bool Key_Conform(String Key)
             {
-                byte[] Key_in_Bytes = System.Text.UTF32Encoding.Default.GetBytes(Key);
+                byte[] Key_in_Bytes = System.Text.UTF8Encoding.Default.GetBytes(Key);
                 BitArray Key_in_Bits = new System.Collections.BitArray(Key_in_Bytes);
                 return Key_in_Bits.Length == length_Key_in_Bits;
             }
@@ -212,7 +212,7 @@ namespace CryptoFun
 
             // Crypt_Decrypt_Specific_Algo is a factorisation of the code use by Encrypt_Specific_Algo and Decrypt_Specific_Algo
             // The encryption and decryption algo are the same, the only change is the order of the keys
-            private String Crypt_Decrypt_Specific_Algo(String Text, String Key, Boolean encrypt)
+            protected String Crypt_Decrypt_Specific_Algo(String Text, String Key, Boolean encrypt)
             {
                 const String _NULL_VALUE_ = "<NULL>";// this constante is use to replace the '\0' char (since we won't be able to read the \0 char again for decoding) 
                 const int Message_Blocks_Lenght = 64;
@@ -263,6 +263,41 @@ namespace CryptoFun
 
         }
         //End of the DES cypher\\
+        
+        private class TDES_Cypher : DES_Cypher {
+
+            const int length_Key_in_Bits = 128;          
+
+            protected override bool Key_Conform(String Key)
+            {
+                byte[] Key_in_Bytes = System.Text.UTF8Encoding.Default.GetBytes(Key);
+                BitArray Key_in_Bits = new System.Collections.BitArray(Key_in_Bytes);
+                return Key_in_Bits.Length == length_Key_in_Bits;
+            }
+
+            protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
+            {
+                String Key1 = Key.Substring(0,8);
+                String Key2 = Key.Substring(8, 8);
+
+                String tempString=Crypt_Decrypt_Specific_Algo(Source_Text, Key1, false);
+                tempString = Crypt_Decrypt_Specific_Algo(tempString, Key2, true);
+                return Crypt_Decrypt_Specific_Algo(tempString, Key1, false);
+            }
+
+            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key)
+            {
+                String Key1 = Key.Substring(0, 8);
+                String Key2 = Key.Substring(8, 8);
+
+                String tempString = Crypt_Decrypt_Specific_Algo(Cypher_Text, Key1, true);
+                tempString = Crypt_Decrypt_Specific_Algo(tempString, Key2, false);
+                return Crypt_Decrypt_Specific_Algo(tempString, Key1, true);
+            }
+
+            public override String ToString() { return "TDES"; }
+        }//End of the TDES cypher\\
+
 
         public Main()
         {
@@ -274,6 +309,7 @@ namespace CryptoFun
         {
             comboBox_Algo_Choice.Items.Add(new Ceasar_Cypher());
             comboBox_Algo_Choice.Items.Add(new DES_Cypher());
+            comboBox_Algo_Choice.Items.Add(new TDES_Cypher());
         }
                
 
