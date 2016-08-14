@@ -110,33 +110,33 @@ namespace CryptoFun
                     BitArray ExpendedR = new BitArray(48);
                     for (int j = 0; j < 48; j++) ExpendedR[j] = R[(E[j] - 1)]; // Expension fonction, R goes from 32 bits to 48
 
-                    ExpendedR.And(Ki[i]);// Add the partial key ki to the rigth part
+                    ExpendedR.Xor(Ki[i]);// Add(Xor operator) the partial key ki to the rigth part
 
                     // the transformed left part is cut in 8 parts of 6 bits 
                     byte[] SBoxesResult = new byte[4]; //Since the 8 results of the S-Boxes are 4 bits long, we're putting two results in one byte
                     for (int j=0; j<8; j++)
                     {
                         // for each of the 8 parts, the first bit plus the last one decide the ordinate, the middle bits define the abscissa
-                        int x = ExpendedR[j*6] ? 0 : 2; 
-                        x = ExpendedR[j*6+5] ? x : x + 1;
-                        int y = ExpendedR[j*6+1] ? 0 : 8;
-                        y = ExpendedR[j*6+2] ? y : y+4;
-                        y = ExpendedR[j*6+3] ? y : y+2;
-                        y = ExpendedR[j*6+4] ? y : y+1;
+                        int x = ExpendedR[j*6] ? 2 : 0; 
+                        x = ExpendedR[j*6+5] ? x+1 : x;
+                        int y = ExpendedR[j*6+1] ? 8 : 0;
+                        y = ExpendedR[j*6+2] ? y+4 : y;
+                        y = ExpendedR[j*6+3] ? y+2 : y;
+                        y = ExpendedR[j*6+4] ? y+1 : y;
 
                         //Since the 8 results of the S-Boxes are 4 bits long, we're putting two results in one byte
-                        SBoxesResult[j/2] = (j % 2==0)? S[j, x, y] : (byte)(SBoxesResult[j/2]+S[j, x, y]*16);                       
+                        SBoxesResult[j/2] = (j % 2==0)? (byte)(S[j, x, y]*16): (byte)(SBoxesResult[j/2]+S[j,x,y]);                       
                     }
                          
                     BitArray SBoxesResult_Bits = new BitArray(SBoxesResult);
                     change_Least_Significant_Bit_position(SBoxesResult_Bits);
 
-                    //final permutation for to have the result of the fonction f
+                    //final permutation to have the result of the fonction f
                     BitArray f = new BitArray (SBoxesResult_Bits.Length);
                     for (int j = 0; j < SBoxesResult_Bits.Length; j++)
                         f[j] = SBoxesResult_Bits[(P[j]-1)];
 
-                    L.And(f);
+                    L.Xor(f);
 
                     //left part and rigth part change positions
                     BitArray temp_left = L;//new BitArray(L);
@@ -219,7 +219,7 @@ namespace CryptoFun
                 byte[] TempoBytes = System.Text.Encoding.Default.GetBytes(Key);
                 BitArray Key_in_Bits = new System.Collections.BitArray(TempoBytes);
                 change_Least_Significant_Bit_position(Key_in_Bits);// change MSB and LSB positions to make it more conveniant for the rest of the algo
-                BitArray[] Ki = Partial_Keys_Creation(Key_in_Bits);
+                BitArray[] Ki = Partial_Keys_Creation(Key_in_Bits);                
                 if (encrypt) Array.Reverse(Ki);//the order of the keys are change if we want to decrypt
 
                 while (Text.Length % 8 != 0) // Add bytes to the message (if necessary)
@@ -240,10 +240,10 @@ namespace CryptoFun
 
                     Feistel_Algo(L, R, Ki);
 
-                    // aggregate the left and rigth parts + final permutation IP^(-1) on the coded message
+                    // switch and aggregate the left and rigth parts + final permutation IP^(-1) on the coded message
                     BitArray Coded_text_In_Bits = new BitArray(64);
                     for (int j = 0; j < FP.Length; j++)
-                        Coded_text_In_Bits[j] = (FP[j] - 1) < L.Length ? L[FP[j] - 1] : R[FP[j] - 1 - L.Length];
+                        Coded_text_In_Bits[j] = (FP[j] - 1) < R.Length ? R[FP[j] - 1] : L[FP[j] - 1 - R.Length];
 
                     // convert bits to String  
                     byte[] Coded_text_In_Bytes = new byte[Coded_text_In_Bits.Length / 8];
