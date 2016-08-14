@@ -214,17 +214,19 @@ namespace CryptoFun
             // The encryption and decryption algo are the same, the only change is the order of the keys
             private String Crypt_Decrypt_Specific_Algo(String Text, String Key, Boolean encrypt)
             {
+                const String _NULL_VALUE_ = "<NULL>";// this constante is use to replace the '\0' char (since we won't be able to read the \0 char again for decoding) 
                 const int Message_Blocks_Lenght = 64;
                 String Coded_text_String = "";
-                byte[] TempoBytes = System.Text.Encoding.Default.GetBytes(Key);
+                byte[] TempoBytes = System.Text.UTF8Encoding.Default.GetBytes(Key);
                 BitArray Key_in_Bits = new System.Collections.BitArray(TempoBytes);
                 change_Least_Significant_Bit_position(Key_in_Bits);// change MSB and LSB positions to make it more conveniant for the rest of the algo
                 BitArray[] Ki = Partial_Keys_Creation(Key_in_Bits);                
                 if (encrypt) Array.Reverse(Ki);//the order of the keys are change if we want to decrypt
 
+                Text = Text.Replace(_NULL_VALUE_, "\0");
                 while (Text.Length % 8 != 0) // Add bytes to the message (if necessary)
-                    Text += " ";
-                TempoBytes = System.Text.Encoding.Default.GetBytes(Text);
+                    Text += " ";                
+                TempoBytes = System.Text.UTF8Encoding.Default.GetBytes(Text);
                 BitArray Source_Text_in_Bits = new System.Collections.BitArray(TempoBytes);
                 change_Least_Significant_Bit_position(Source_Text_in_Bits);
                 // divid message in part of 64 bits
@@ -249,10 +251,11 @@ namespace CryptoFun
                     byte[] Coded_text_In_Bytes = new byte[Coded_text_In_Bits.Length / 8];
                     change_Least_Significant_Bit_position(Coded_text_In_Bits);//Put back the MSB and LSB in the order .Net is use to
                     Coded_text_In_Bits.CopyTo(Coded_text_In_Bytes, 0);                    
-                    Coded_text_String = Coded_text_String + System.Text.Encoding.Default.GetString(Coded_text_In_Bytes);
+                    Coded_text_String = Coded_text_String + System.Text.UTF8Encoding.Default.GetString(Coded_text_In_Bytes);
                 }
-                
-                return Coded_text_String;
+
+                return Coded_text_String.Replace("\0",_NULL_VALUE_);
+                //return Coded_text_String;
             }
 
 
