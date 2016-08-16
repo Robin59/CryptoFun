@@ -34,6 +34,7 @@
             this.button_Encrypt = new System.Windows.Forms.Button();
             this.button_Decrypt = new System.Windows.Forms.Button();
             this.textBox_Key = new System.Windows.Forms.TextBox();
+            this.textBox_Additional_Imput = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // comboBox_Algo_Choice
@@ -43,6 +44,7 @@
             this.comboBox_Algo_Choice.Name = "comboBox_Algo_Choice";
             this.comboBox_Algo_Choice.Size = new System.Drawing.Size(121, 21);
             this.comboBox_Algo_Choice.TabIndex = 0;
+            this.comboBox_Algo_Choice.SelectedValueChanged += new System.EventHandler(this.comboBox_Algo_Choice_SelectedValueChanged);
             // 
             // textBox_In
             // 
@@ -87,6 +89,14 @@
             this.textBox_Key.Size = new System.Drawing.Size(100, 20);
             this.textBox_Key.TabIndex = 5;
             // 
+            // textBox_Additional_Imput
+            // 
+            this.textBox_Additional_Imput.Location = new System.Drawing.Point(169, 53);
+            this.textBox_Additional_Imput.Name = "textBox_Additional_Imput";
+            this.textBox_Additional_Imput.Size = new System.Drawing.Size(100, 20);
+            this.textBox_Additional_Imput.TabIndex = 6;
+            this.textBox_Additional_Imput.Visible = false;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -94,6 +104,7 @@
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(292, 273);
+            this.Controls.Add(this.textBox_Additional_Imput);
             this.Controls.Add(this.textBox_Key);
             this.Controls.Add(this.button_Decrypt);
             this.Controls.Add(this.button_Encrypt);
@@ -115,6 +126,7 @@
         private System.Windows.Forms.Button button_Encrypt;
         private System.Windows.Forms.Button button_Decrypt;
         private System.Windows.Forms.TextBox textBox_Key;
+        private System.Windows.Forms.TextBox textBox_Additional_Imput;
     }
 }
 

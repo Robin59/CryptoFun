@@ -19,19 +19,21 @@ namespace CryptoFun
         {
 
             protected abstract bool Key_Conform(String Key);
-            protected abstract String Encrypt_Specific_Algo(String Source_Text, String Key);
-            protected abstract String Decrypt_Specific_Algo(String Cypher_Text, String Key);
+            protected abstract String Encrypt_Specific_Algo(String Source_Text, String Key, String Additional_Input);
+            protected abstract String Decrypt_Specific_Algo(String Cypher_Text, String Key, String Additional_Input);
 
-            public String Encrypt(String Source_Text, String Key)
+            public virtual bool need_Additional_Input { get { return false; } }
+
+            public String Encrypt(String Source_Text, String Key, String Additional_Input)
             {
                 if (Key_Conform(Key))
-                    return Encrypt_Specific_Algo(Source_Text, Key);
+                    return Encrypt_Specific_Algo(Source_Text, Key, Additional_Input);
                 else return "The key is incompatible with the chosen algorithm";
             }
-            public String Decrypt(String Cypher_Text, String Key)
+            public String Decrypt(String Cypher_Text, String Key, String Additional_Input)
             {
                 if (Key_Conform(Key))
-                    return Decrypt_Specific_Algo(Cypher_Text, Key);
+                    return Decrypt_Specific_Algo(Cypher_Text, Key, Additional_Input);
                 else return "The key is incompatible with the chosen algorithm";
             }
         }
@@ -44,8 +46,12 @@ namespace CryptoFun
                 return Int32.TryParse(Key, out Mook_Int) && (Mook_Int >= 0);
             }
 
-            protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
+            protected override String Encrypt_Specific_Algo(String Source_Text, String Key, String Additional_Input="")
             {
+                Int64 Source_Int;
+                if (!Int64.TryParse(Key, out Source_Int)) return "This version works only on numbers";
+                if (!Int64.TryParse(Key, out Source_Int)) return "This version works only on numbers";
+
                 int Encoded_Int;
                 String Result = "";
                 foreach (char Character in Source_Text)
@@ -57,7 +63,7 @@ namespace CryptoFun
                 return Result;
             }
 
-            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key)
+            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key, String Additional_Input="")
             {
                 return Encrypt_Specific_Algo(Cypher_Text, "-" + Key);
             }
@@ -200,12 +206,12 @@ namespace CryptoFun
                 return Partial_Keys;
             }
 
-            protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
+            protected override String Encrypt_Specific_Algo(String Source_Text, String Key, String Additional_Input="")
             {               
                 return Crypt_Decrypt_Specific_Algo(Source_Text,Key, false);
             }
 
-            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key)
+            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key, String Additional_Input = "")
             {
                 return Crypt_Decrypt_Specific_Algo(Cypher_Text, Key, true);
             }
@@ -275,7 +281,7 @@ namespace CryptoFun
                 return Key_in_Bits.Length == length_Key_in_Bits;
             }
 
-            protected override String Encrypt_Specific_Algo(String Source_Text, String Key)
+            protected override String Encrypt_Specific_Algo(String Source_Text, String Key, String Additional_Input = "")
             {
                 String Key1 = Key.Substring(0,8);
                 String Key2 = Key.Substring(8, 8);
@@ -285,7 +291,7 @@ namespace CryptoFun
                 return Crypt_Decrypt_Specific_Algo(tempString, Key1, false);
             }
 
-            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key)
+            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key, String Additional_Input = "")
             {
                 String Key1 = Key.Substring(0, 8);
                 String Key2 = Key.Substring(8, 8);
@@ -298,6 +304,48 @@ namespace CryptoFun
             public override String ToString() { return "TDES"; }
         }//End of the TDES cypher\\
 
+        private class RSA_Cypher : Cypher_Algorithm
+        {
+            public override bool need_Additional_Input { get { return true; } }
+
+            protected override bool Key_Conform(String Key)
+            {
+                Int32 Mook_Int;
+                return Int32.TryParse(Key, out Mook_Int) && (Mook_Int > 0); 
+            }
+
+            private bool Additional_Input_Conform(String Additional_Input)
+            {
+                Int32 Mook_Int;
+                return Int32.TryParse(Additional_Input, out Mook_Int);
+            }            
+
+            protected override String Encrypt_Specific_Algo(String Source_Text, String Key, String additional_Input)
+            {
+                Int64 source_int;
+
+                if (!Additional_Input_Conform(additional_Input))
+                    return "The value of n is not conform for the RSA cypher";
+                else if (! Int64.TryParse(Source_Text, out source_int))
+                    return "This implementation of the RSA cypher works only with numbers";
+                else
+                {
+                    Int64 key_Int = Convert.ToInt64(Key);
+                    Int64 additional_Input_Int = Convert.ToInt64(additional_Input);
+                    Int64 result = ((Int64)Math.Pow(source_int, key_Int))%(additional_Input_Int);
+                    return result.ToString();
+                }
+            }
+
+            protected override String Decrypt_Specific_Algo(String Cypher_Text, String Key, String additional_Input)
+            {
+                return Encrypt_Specific_Algo(Cypher_Text, Key, additional_Input);
+            }
+
+            public override String ToString() { return "RSA"; }
+
+        }
+        // End of the RSA cypher\\
 
         public Main()
         {
@@ -310,13 +358,14 @@ namespace CryptoFun
             comboBox_Algo_Choice.Items.Add(new Ceasar_Cypher());
             comboBox_Algo_Choice.Items.Add(new DES_Cypher());
             comboBox_Algo_Choice.Items.Add(new TDES_Cypher());
+            comboBox_Algo_Choice.Items.Add(new RSA_Cypher());
         }
                
 
         private void button_Encrypt_Click(object sender, EventArgs e)
         {
             if (comboBox_Algo_Choice.SelectedItem != null) {
-                textBox_Out.Text = ((Cypher_Algorithm)(comboBox_Algo_Choice.SelectedItem)).Encrypt(textBox_In.Text, textBox_Key.Text);
+                textBox_Out.Text = ((Cypher_Algorithm)(comboBox_Algo_Choice.SelectedItem)).Encrypt(textBox_In.Text, textBox_Key.Text, textBox_Additional_Imput.Text);
             }else {
                 textBox_Out.Text = "Choose a cypher algorithm";
             }
@@ -326,12 +375,18 @@ namespace CryptoFun
         {
             if (comboBox_Algo_Choice.SelectedItem != null)
             {
-                textBox_In.Text = ((Cypher_Algorithm)(comboBox_Algo_Choice.SelectedItem)).Decrypt(textBox_Out.Text, textBox_Key.Text);
+                textBox_In.Text = ((Cypher_Algorithm)(comboBox_Algo_Choice.SelectedItem)).Decrypt(textBox_Out.Text, textBox_Key.Text, textBox_Additional_Imput.Text);
             }
             else
             {
                 textBox_In.Text = "Choose a cypher algorithm";
             }
+        }
+
+        private void comboBox_Algo_Choice_SelectedValueChanged(object sender, EventArgs e)
+        {
+            textBox_Additional_Imput.Visible=(comboBox_Algo_Choice.SelectedItem != null && ((Cypher_Algorithm)comboBox_Algo_Choice.SelectedItem).need_Additional_Input);
+            
         }
     }
 }
