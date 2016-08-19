@@ -330,9 +330,16 @@ namespace CryptoFun
                     return "This implementation of the RSA cypher works only with numbers";
                 else
                 {
-                    Int64 key_Int = Convert.ToInt64(Key);
-                    Int64 additional_Input_Int = Convert.ToInt64(additional_Input);
-                    Int64 result = ((Int64)Math.Pow(source_int, key_Int))%(additional_Input_Int);
+                    Int64 key_Int = Convert.ToInt64(Key);                    
+                    Int64 n = Convert.ToInt64(additional_Input);
+                    Int64 result = 1;
+                    Int64 b = source_int;
+                    while (key_Int > 0)
+                    {
+                        if ((key_Int & 1) > 0) result = (result * b) % n;
+                        key_Int >>= 1;
+                        b = (b * b) % n;
+                    }                    
                     return result.ToString();
                 }
             }
